@@ -3,7 +3,7 @@
 package copyrightheader
 
 import (
-	"fmt"
+	"errors"
 	"go/ast"
 	"strings"
 
@@ -95,7 +95,7 @@ func (an *analyzer) checkFile(pass *analysis.Pass, file *ast.File, want string) 
 func (an *analyzer) run(pass *analysis.Pass) (any, error) {
 	want := strings.TrimSpace(an.header)
 	if want == "" {
-		return nil, fmt.Errorf("copyrightheader: header must not be empty")
+		return nil, errors.New("copyrightheader: header must not be empty")
 	}
 
 	for _, file := range pass.Files {
@@ -159,4 +159,3 @@ func headerComment(file *ast.File) *ast.CommentGroup {
 	}
 	return nil
 }
-

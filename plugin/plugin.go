@@ -24,7 +24,7 @@
 package plugin
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/golangci/plugin-module-register/register"
 	"golang.org/x/tools/go/analysis"
@@ -58,7 +58,7 @@ func New(raw any) (register.LinterPlugin, error) {
 		return nil, err
 	}
 	if settings.Header == "" {
-		return nil, fmt.Errorf("copyrightheader: 'header' setting is required")
+		return nil, errors.New("copyrightheader: 'header' setting is required")
 	}
 	return &plugin{settings: settings}, nil
 }
