@@ -1,0 +1,2 @@
+// Copyright 2026 utgwkk
+package a // want "copyright header must be separated from the package clause by a blank line"
