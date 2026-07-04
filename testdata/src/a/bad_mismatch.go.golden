@@ -1,0 +1,3 @@
+// Copyright 2026 utgwkk
+
+package a // want "copyright header does not match the required text"

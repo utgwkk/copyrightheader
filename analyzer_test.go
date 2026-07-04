@@ -12,5 +12,5 @@ func TestAnalyzer(t *testing.T) {
 	a := copyrightheader.New(copyrightheader.Config{
 		Header: "Copyright 2026 utgwkk",
 	})
-	analysistest.Run(t, analysistest.TestData(), a, "a")
+	analysistest.RunWithSuggestedFixes(t, analysistest.TestData(), a, "a")
 }
