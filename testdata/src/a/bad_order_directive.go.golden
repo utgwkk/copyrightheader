@@ -1,0 +1,5 @@
+// Copyright 2026 utgwkk
+
+//go:build !ignore
+
+package a // want "copyright header must be the first comment in the file"
