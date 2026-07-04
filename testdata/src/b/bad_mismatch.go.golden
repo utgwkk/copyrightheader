@@ -1,0 +1,4 @@
+// Copyright 2026 utgwkk
+// All rights reserved.
+
+package b // want "copyright header does not match the required text"
