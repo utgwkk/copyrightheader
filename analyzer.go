@@ -29,17 +29,18 @@ func (an *analyzer) checkFile(pass *analysis.Pass, file *ast.File, want string) 
 	cg := headerComment(file)
 	if cg == nil {
 		pass.Report(analysis.Diagnostic{
-			Pos:     file.FileStart,
+			Pos:     file.Package,
 			Message: "missing copyright header comment",
 			SuggestedFixes: []analysis.SuggestedFix{
 				{
 					Message: "Insert copyright header",
 					TextEdits: []analysis.TextEdit{
 						{
-							// Insert before the package clause so that any
-							// preceding //go:build directives are left in place.
-							Pos:     file.Package,
-							End:     file.Package,
+							// Insert at the very start of the file so that
+							// the copyright header comes before any //go:build
+							// directives.
+							Pos:     file.FileStart,
+							End:     file.FileStart,
 							NewText: []byte(renderHeaderComment(want) + "\n\n"),
 						},
 					},
@@ -67,6 +68,42 @@ func (an *analyzer) checkFile(pass *analysis.Pass, file *ast.File, want string) 
 		})
 		return
 	}
+	// The copyright header must be the very first comment in the file so
+	// that build constraints (//go:build) come after it. If any comment
+	// group precedes the header it can only be a directive-only group
+	// (otherwise headerComment would have returned it instead) — i.e. a
+	// misplaced build constraint.
+	// file.Comments is guaranteed non-empty here: cg != nil means
+	// headerComment found at least one element in file.Comments.
+	if file.Comments[0] != cg {
+		pass.Report(analysis.Diagnostic{
+			Pos:     file.Package,
+			Message: "copyright header must be the first comment in the file",
+			SuggestedFixes: []analysis.SuggestedFix{
+				{
+					Message: "Move the copyright header before the build constraints",
+					TextEdits: []analysis.TextEdit{
+						{
+							// Insert the header at the very top of the file.
+							Pos:     file.FileStart,
+							End:     file.FileStart,
+							NewText: []byte(renderHeaderComment(want) + "\n\n"),
+						},
+						{
+							// Remove the misplaced header and its trailing
+							// blank line up to (but not including) the package
+							// keyword.
+							Pos:     cg.Pos(),
+							End:     file.Package,
+							NewText: nil,
+						},
+					},
+				},
+			},
+		})
+		return
+	}
+
 	// file.Doc points to the comment group that is attached to the
 	// package clause (i.e. immediately before it with no blank line).
 	// If the copyright comment has no blank line separating it from

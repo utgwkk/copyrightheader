@@ -8,7 +8,7 @@ A Go static analysis tool that checks every `.go` file starts with a copyright h
 - Reports files whose copyright header does not match the required text
 - Reports files where the copyright header is not separated from the `package` clause by a blank line
 - Provides suggested fixes for all reported issues (auto-fixable via `go fix` / golangci-lint `--fix`)
-- Skips `//go:build` directive-only comment groups correctly
+- Requires the copyright header to appear before any `//go:build` build constraints (i.e. as the very first comment in the file); files with the wrong order are reported and an auto-fix that reorders them is provided
 - Supports multi-line copyright headers
 
 ## Installation
