@@ -25,6 +25,73 @@ type analyzer struct {
 	header string
 }
 
+func (an *analyzer) checkFile(pass *analysis.Pass, file *ast.File, want string) {
+	cg := headerComment(file)
+	if cg == nil {
+		pass.Report(analysis.Diagnostic{
+			Pos:     file.FileStart,
+			Message: "missing copyright header comment",
+			SuggestedFixes: []analysis.SuggestedFix{
+				{
+					Message: "Insert copyright header",
+					TextEdits: []analysis.TextEdit{
+						{
+							// Insert before the package clause so that any
+							// preceding //go:build directives are left in place.
+							Pos:     file.Package,
+							End:     file.Package,
+							NewText: []byte(renderHeaderComment(want) + "\n\n"),
+						},
+					},
+				},
+			},
+		})
+		return
+	}
+	if got := strings.TrimSpace(cg.Text()); got != want {
+		pass.Report(analysis.Diagnostic{
+			Pos:     file.Package,
+			Message: "copyright header does not match the required text",
+			SuggestedFixes: []analysis.SuggestedFix{
+				{
+					Message: "Replace with the required copyright header",
+					TextEdits: []analysis.TextEdit{
+						{
+							Pos:     cg.Pos(),
+							End:     cg.End(),
+							NewText: []byte(renderHeaderComment(want)),
+						},
+					},
+				},
+			},
+		})
+		return
+	}
+	// file.Doc points to the comment group that is attached to the
+	// package clause (i.e. immediately before it with no blank line).
+	// If the copyright comment has no blank line separating it from
+	// the package clause, the Go parser treats it as the package doc
+	// and file.Doc == cg.
+	if file.Doc == cg {
+		pass.Report(analysis.Diagnostic{
+			Pos:     file.Package,
+			Message: "copyright header must be separated from the package clause by a blank line",
+			SuggestedFixes: []analysis.SuggestedFix{
+				{
+					Message: "Add a blank line after the copyright header",
+					TextEdits: []analysis.TextEdit{
+						{
+							Pos:     cg.End(),
+							End:     cg.End(),
+							NewText: []byte("\n"),
+						},
+					},
+				},
+			},
+		})
+	}
+}
+
 func (an *analyzer) run(pass *analysis.Pass) (any, error) {
 	want := strings.TrimSpace(an.header)
 	if want == "" {
@@ -32,70 +99,7 @@ func (an *analyzer) run(pass *analysis.Pass) (any, error) {
 	}
 
 	for _, file := range pass.Files {
-		cg := headerComment(file)
-		if cg == nil {
-			pass.Report(analysis.Diagnostic{
-				Pos:     file.FileStart,
-				Message: "missing copyright header comment",
-				SuggestedFixes: []analysis.SuggestedFix{
-					{
-						Message: "Insert copyright header",
-						TextEdits: []analysis.TextEdit{
-							{
-								// Insert before the package clause so that any
-								// preceding //go:build directives are left in place.
-								Pos:     file.Package,
-								End:     file.Package,
-								NewText: []byte(renderHeaderComment(want) + "\n\n"),
-							},
-						},
-					},
-				},
-			})
-			continue
-		}
-		if got := strings.TrimSpace(cg.Text()); got != want {
-			pass.Report(analysis.Diagnostic{
-				Pos:     file.Package,
-				Message: "copyright header does not match the required text",
-				SuggestedFixes: []analysis.SuggestedFix{
-					{
-						Message: "Replace with the required copyright header",
-						TextEdits: []analysis.TextEdit{
-							{
-								Pos:     cg.Pos(),
-								End:     cg.End(),
-								NewText: []byte(renderHeaderComment(want)),
-							},
-						},
-					},
-				},
-			})
-			continue
-		}
-		// file.Doc points to the comment group that is attached to the
-		// package clause (i.e. immediately before it with no blank line).
-		// If the copyright comment has no blank line separating it from
-		// the package clause, the Go parser treats it as the package doc
-		// and file.Doc == cg.
-		if file.Doc == cg {
-			pass.Report(analysis.Diagnostic{
-				Pos:     file.Package,
-				Message: "copyright header must be separated from the package clause by a blank line",
-				SuggestedFixes: []analysis.SuggestedFix{
-					{
-						Message: "Add a blank line after the copyright header",
-						TextEdits: []analysis.TextEdit{
-							{
-								Pos:     cg.End(),
-								End:     cg.End(),
-								NewText: []byte("\n"),
-							},
-						},
-					},
-				},
-			})
-		}
+		an.checkFile(pass, file, want)
 	}
 	return nil, nil
 }
