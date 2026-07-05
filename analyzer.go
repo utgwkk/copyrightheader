@@ -18,8 +18,6 @@ type Config struct {
 }
 
 type analyzer struct {
-	// header is writable so that the -header flag can override the value from
-	// Config when the binary is invoked from the command line via singlechecker.
 	header string
 }
 
