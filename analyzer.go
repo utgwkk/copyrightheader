@@ -10,7 +10,6 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// Config configures the analyzer.
 type Config struct {
 	// Header is the exact text (comment markers stripped) that the leading
 	// comment must contain. Both the file comment and this value are trimmed
@@ -18,10 +17,7 @@ type Config struct {
 	Header string
 }
 
-// analyzer holds the state threaded through a single analysis pass.
 type analyzer struct {
-	// header is writable so that the -header flag can override the value from
-	// Config when the binary is invoked from the command line via singlechecker.
 	header string
 }
 
@@ -84,7 +80,6 @@ func (an *analyzer) checkFile(pass *analysis.Pass, file *ast.File, want string) 
 					Message: "Move the copyright header before the build constraints",
 					TextEdits: []analysis.TextEdit{
 						{
-							// Insert the header at the very top of the file.
 							Pos:     file.FileStart,
 							End:     file.FileStart,
 							NewText: []byte(renderHeaderComment(want) + "\n\n"),
@@ -141,10 +136,6 @@ func (an *analyzer) run(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-// New returns an analyzer that reports files whose leading comment does not
-// exactly match cfg.Header (after trimming), or that have no leading comment
-// at all, or that have no blank line between the copyright comment and the
-// package clause.
 func New(cfg Config) *analysis.Analyzer {
 	an := &analyzer{header: cfg.Header}
 
@@ -160,8 +151,6 @@ func New(cfg Config) *analysis.Analyzer {
 }
 
 // renderHeaderComment converts plain header text into Go // comment form.
-// Each line of text is prefixed with "// "; blank lines become bare "//".
-// Multi-line headers are handled correctly.
 func renderHeaderComment(text string) string {
 	lines := strings.Split(text, "\n")
 	var b strings.Builder
@@ -179,10 +168,9 @@ func renderHeaderComment(text string) string {
 	return b.String()
 }
 
-// headerComment returns the first "real" comment group that appears before the
-// package clause in file. It skips comment groups whose Text() is empty after
-// trimming — this naturally excludes directive-only groups (e.g. //go:build)
-// because ast.CommentGroup.Text() strips directives from its output.
+// headerComment returns the first comment group before the package clause.
+// Directive-only groups (e.g. //go:build) are skipped because
+// ast.CommentGroup.Text() strips directives, leaving an empty string.
 func headerComment(file *ast.File) *ast.CommentGroup {
 	for _, cg := range file.Comments {
 		if cg.Pos() >= file.Package {
