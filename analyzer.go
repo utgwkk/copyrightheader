@@ -10,7 +10,6 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// Config configures the analyzer.
 type Config struct {
 	// Header is the exact text (comment markers stripped) that the leading
 	// comment must contain. Both the file comment and this value are trimmed
@@ -18,7 +17,6 @@ type Config struct {
 	Header string
 }
 
-// analyzer holds the state threaded through a single analysis pass.
 type analyzer struct {
 	// header is writable so that the -header flag can override the value from
 	// Config when the binary is invoked from the command line via singlechecker.
@@ -84,7 +82,6 @@ func (an *analyzer) checkFile(pass *analysis.Pass, file *ast.File, want string) 
 					Message: "Move the copyright header before the build constraints",
 					TextEdits: []analysis.TextEdit{
 						{
-							// Insert the header at the very top of the file.
 							Pos:     file.FileStart,
 							End:     file.FileStart,
 							NewText: []byte(renderHeaderComment(want) + "\n\n"),
@@ -141,10 +138,6 @@ func (an *analyzer) run(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-// New returns an analyzer that reports files whose leading comment does not
-// exactly match cfg.Header (after trimming), or that have no leading comment
-// at all, or that have no blank line between the copyright comment and the
-// package clause.
 func New(cfg Config) *analysis.Analyzer {
 	an := &analyzer{header: cfg.Header}
 
