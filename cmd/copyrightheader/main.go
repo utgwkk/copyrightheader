@@ -1,12 +1,3 @@
-// Command copyrightheader runs the copyrightheader linter.
-//
-// It can be used in two ways:
-//
-//  1. Standalone:
-//     copyrightheader -header='Copyright 2026 Your Name' ./...
-//
-//  2. As a vettool for go vet:
-//     go vet -vettool=$(which copyrightheader) -copyrightheader.header='Copyright 2026 Your Name' ./...
 package main
 
 import (
