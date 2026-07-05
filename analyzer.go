@@ -153,8 +153,6 @@ func New(cfg Config) *analysis.Analyzer {
 }
 
 // renderHeaderComment converts plain header text into Go // comment form.
-// Each line of text is prefixed with "// "; blank lines become bare "//".
-// Multi-line headers are handled correctly.
 func renderHeaderComment(text string) string {
 	lines := strings.Split(text, "\n")
 	var b strings.Builder
@@ -172,10 +170,9 @@ func renderHeaderComment(text string) string {
 	return b.String()
 }
 
-// headerComment returns the first "real" comment group that appears before the
-// package clause in file. It skips comment groups whose Text() is empty after
-// trimming — this naturally excludes directive-only groups (e.g. //go:build)
-// because ast.CommentGroup.Text() strips directives from its output.
+// headerComment returns the first comment group before the package clause.
+// Directive-only groups (e.g. //go:build) are skipped because
+// ast.CommentGroup.Text() strips directives, leaving an empty string.
 func headerComment(file *ast.File) *ast.CommentGroup {
 	for _, cg := range file.Comments {
 		if cg.Pos() >= file.Package {
