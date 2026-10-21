@@ -1,1 +1,1 @@
-package b // want "missing copyright header comment"
+package b // want "missing copyright header"

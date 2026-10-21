@@ -41,3 +41,34 @@ SOFTWARE.`,
 	})
 	analysistest.RunWithSuggestedFixes(t, analysistest.TestData(), a, "b")
 }
+
+func TestAnalyzer_PatternMode(t *testing.T) {
+	a := copyrightheader.New(copyrightheader.Config{
+		Header:       "Copyright (c) 2026 utgwkk\nSPDX-License-Identifier: MIT",
+		PatternStart: `^//\s*Copyright.*`,
+		PatternEnd:   `^//\s*SPDX-License-Identifier.*`,
+	})
+	analysistest.RunWithSuggestedFixes(t, analysistest.TestData(), a, "c")
+}
+
+func TestConfig_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		cfg     copyrightheader.Config
+		wantErr bool
+	}{
+		{"valid minimal", copyrightheader.Config{Header: "x"}, false},
+		{"valid pattern", copyrightheader.Config{Header: "x", PatternStart: "a", PatternEnd: "b"}, false},
+		{"empty header", copyrightheader.Config{}, true},
+		{"start only", copyrightheader.Config{Header: "x", PatternStart: "a"}, true},
+		{"end only", copyrightheader.Config{Header: "x", PatternEnd: "b"}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.cfg.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
