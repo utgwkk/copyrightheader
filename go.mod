@@ -3,8 +3,10 @@ module github.com/utgwkk/copyrightheader
 go 1.26.0
 
 require (
+	github.com/bmatcuk/doublestar/v4 v4.10.3
 	github.com/golangci/plugin-module-register v0.1.2
 	golang.org/x/tools v0.52.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

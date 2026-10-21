@@ -17,15 +17,19 @@
 //	      copyrightheader:
 //	        type: module
 //	        settings:
-//	          header: 'Copyright 2026 Your Name'
+//	          header: 'Copyright (c) 2026 Stefan Daurer\nSPDX-License-Identifier: EPL-2.0'
+//	          patternstart: '^//\s*Copyright.*'
+//	          patternend: '^//\s*SPDX-License-Identifier.*'
+//	          patternignore: '//\s*Code generated.*DO NOT EDIT.*'
+//	          exclude:
+//	            - 'mocks/**'
+//	            - 'vendor/**'
 //
 // Note: golangci-lint uses Viper for config loading, which lowercases map
-// keys. The settings key must be lowercase "header".
+// keys. All settings keys must be lowercase.
 package plugin
 
 import (
-	"errors"
-
 	"github.com/golangci/plugin-module-register/register"
 	"golang.org/x/tools/go/analysis"
 
@@ -39,10 +43,11 @@ func init() {
 // Settings maps to linters.settings.custom.copyrightheader.settings
 // in .golangci.yml.
 type Settings struct {
-	// Header is the exact copyright text that must appear at the top of every
-	// .go file (comment markers stripped, whitespace trimmed).
-	// The key must be lowercase because golangci-lint (Viper) lowercases keys.
-	Header string `json:"header"`
+	Header        string   `json:"header"`
+	PatternStart  string   `json:"patternstart"`
+	PatternEnd    string   `json:"patternend"`
+	PatternIgnore string   `json:"patternignore"`
+	Exclude       []string `json:"exclude"`
 }
 
 type plugin struct {
@@ -57,22 +62,35 @@ func New(raw any) (register.LinterPlugin, error) {
 	if err != nil {
 		return nil, err
 	}
-	if settings.Header == "" {
-		return nil, errors.New("copyrightheader: 'header' setting is required")
+	cfg := copyrightheader.Config{
+		Header:        settings.Header,
+		PatternStart:  settings.PatternStart,
+		PatternEnd:    settings.PatternEnd,
+		PatternIgnore: settings.PatternIgnore,
+		Exclude:       settings.Exclude,
+	}
+	if err := cfg.Validate(); err != nil {
+		return nil, err
 	}
 	return &plugin{settings: settings}, nil
 }
 
 // BuildAnalyzers returns the list of analyzers provided by this plugin.
 func (p *plugin) BuildAnalyzers() ([]*analysis.Analyzer, error) {
+	cfg := copyrightheader.Config{
+		Header:        p.settings.Header,
+		PatternStart:  p.settings.PatternStart,
+		PatternEnd:    p.settings.PatternEnd,
+		PatternIgnore: p.settings.PatternIgnore,
+		Exclude:       p.settings.Exclude,
+	}
 	return []*analysis.Analyzer{
-		copyrightheader.New(copyrightheader.Config{Header: p.settings.Header}),
+		copyrightheader.New(cfg),
 	}, nil
 }
 
 // GetLoadMode returns LoadModeSyntax. We only inspect comments in the already-
-// parsed AST, so no type information is needed. This is the key speed advantage
-// over the bundled goheader linter.
+// parsed AST, so no type information is needed.
 func (p *plugin) GetLoadMode() string {
 	return register.LoadModeSyntax
 }

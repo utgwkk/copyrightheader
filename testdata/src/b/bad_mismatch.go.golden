@@ -20,4 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package b // want "copyright header does not match the required text"
+// Copyright 1999 wrong
+
+package b // want "copyright header does not match"

@@ -1,0 +1,6 @@
+// Copyright (c) 2026 utgwkk
+// SPDX-License-Identifier: MIT
+
+// Package c does things.
+
+package c // want "missing copyright header"
